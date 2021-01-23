@@ -28,7 +28,7 @@ import java.util.List;
 
 public class HideAppsFragment extends Fragment {
     private static final String TAG = "RequestActivity";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private ArrayList<String> _listActivitiesHidden = new ArrayList();
     private ArrayList<App> _listActivitiesAll = new ArrayList();

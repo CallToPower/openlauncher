@@ -13,17 +13,24 @@ import android.content.pm.LauncherApps;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -42,12 +49,14 @@ import com.benny.openlauncher.model.Item;
 import com.benny.openlauncher.notifications.NotificationListener;
 import com.benny.openlauncher.receivers.AppUpdateReceiver;
 import com.benny.openlauncher.receivers.ShortcutReceiver;
+import com.benny.openlauncher.util.AccessibilityUtils;
 import com.benny.openlauncher.util.AppManager;
 import com.benny.openlauncher.util.AppSettings;
 import com.benny.openlauncher.util.DatabaseHelper;
 import com.benny.openlauncher.util.Definitions.ItemPosition;
 import com.benny.openlauncher.util.LauncherAction;
 import com.benny.openlauncher.util.LauncherAction.Action;
+import com.benny.openlauncher.util.LockAccessibilityService;
 import com.benny.openlauncher.util.Tool;
 import com.benny.openlauncher.viewutil.DialogHelper;
 import com.benny.openlauncher.viewutil.MinibarAdapter;
@@ -217,6 +226,51 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
         initAppManager();
         initSettings();
         initViews();
+
+        createDoubleTapToSleepListener();
+    }
+
+    /**
+     * Creates a "double tap on sleep" listener (via Accessibility) and binds it to the main screen
+     * If the Accessibility manager is not activated, request activation
+     */
+    private void createDoubleTapToSleepListener() {
+        Log.d(getClass().getName(), "createDoubleTapToSleepListener");
+
+        getDesktopIndicator().setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                gestureDetector.onTouchEvent(event);
+                return false;
+            }
+
+            private GestureDetector gestureDetector = new GestureDetector(getApplicationContext(), new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onDown(MotionEvent e) { // Alternatively: onDoubleTap
+                    Log.d(getClass().getName(), "onDoubleTap");
+
+                    AccessibilityManager manager = (AccessibilityManager) getDesktopIndicator().getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
+                    if (manager.isEnabled() && AccessibilityUtils.getInstance().isAccessibilitySettingsOn(getPackageName(), getDesktopIndicator().getContext())) {
+                        Log.d(getClass().getName(), "Accessibility Manager enabled");
+                        AccessibilityEvent event = AccessibilityEvent.obtain();
+                        event.setEventType(AccessibilityEvent.TYPE_ANNOUNCEMENT);
+                        event.setClassName(getClass().getName());
+                        event.getText().add(LockAccessibilityService.CUSTOM_DOUBLE_TAP_EVENT);
+
+                        event.setSource(getDesktopIndicator());
+                        manager.sendAccessibilityEvent(event);
+                    } else {
+                        Log.d(getClass().getName(), "Accessibility Manager not enabled");
+                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        Toast.makeText(getApplicationContext(), "Please enable this app in the accessibility settings to enable double tap to sleep", Toast.LENGTH_LONG).show();
+                    }
+
+                    return super.onDoubleTap(e);
+                }
+            });
+        });
     }
 
     protected void initAppManager() {
