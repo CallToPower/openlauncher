@@ -23,7 +23,7 @@ android {
 
         applicationId "com.benny.openlauncher"
         versionCode 42
-        versionName "0.7.4 (CTP Edition)"
+        versionName "0.7.4 build 2 (CTP Edition)"
     }
 
     productFlavors {

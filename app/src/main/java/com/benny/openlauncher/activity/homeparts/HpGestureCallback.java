@@ -52,7 +52,7 @@ public class HpGestureCallback implements DesktopGestureListener.DesktopGestureC
                 Intent intent = (Intent) gesture;
                 Tool.startApp(HomeActivity._launcher, Setup.appLoader().findApp(intent), null);
             } else if (gesture instanceof LauncherAction.ActionDisplayItem) {
-                LauncherAction.RunAction((LauncherAction.ActionDisplayItem) gesture, desktop.getContext(), null);
+                LauncherAction.RunAction((LauncherAction.ActionDisplayItem) gesture, desktop.getContext(), HomeActivity._instance);
             }
             return true;
         }

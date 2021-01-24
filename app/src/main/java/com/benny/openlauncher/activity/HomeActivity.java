@@ -20,8 +20,6 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -30,7 +28,6 @@ import android.view.accessibility.AccessibilityManager;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -90,6 +87,8 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
     public static boolean ignoreResume;
     public static float _itemTouchX;
     public static float _itemTouchY;
+
+    public static HomeActivity _instance;
 
     // static launcher variables
     public static HomeActivity _launcher;
@@ -229,37 +228,18 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
         initViews();
 
         _tapToSleepView = getDesktopIndicator();
-        createDoubleTapToSleepListener();
+        // This is a small but dirty hack to get a HomeActivity instance in HpGestureCallback...
+        if (_instance == null) {
+            _instance = this;
+        }
     }
 
     /**
-     * Creates a "double tap on sleep" listener (via Accessibility) and binds it to the main screen
+     * Locks the screen (via Accessibility)
      * If the Accessibility manager is not activated, request activation
      */
-    private void createDoubleTapToSleepListener() {
-        Log.d(getClass().getName(), "createDoubleTapToSleepListener");
-
-        _tapToSleepView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                gestureDetector.onTouchEvent(event);
-                return false;
-            }
-
-            private GestureDetector gestureDetector = new GestureDetector(getApplicationContext(), new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onDown(MotionEvent e) { // Alternatively: onDoubleTap
-                    Log.d(getClass().getName(), "onDoubleTap");
-
-                    lockScreen();
-
-                    return super.onDoubleTap(e);
-                }
-            });
-        });
-    }
-
     public void lockScreen() {
+        Log.d(getClass().getName(), "Trying to lock screen");
         AccessibilityManager manager = (AccessibilityManager) _tapToSleepView.getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
         if (manager.isEnabled() && AccessibilityUtils.getInstance().isAccessibilitySettingsOn(getPackageName(), _tapToSleepView.getContext())) {
             Log.d(getClass().getName(), "Accessibility Manager enabled");
