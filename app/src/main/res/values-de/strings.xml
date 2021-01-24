@@ -268,6 +268,11 @@
     <string name="device_admin_summary">OpenLauncher benötigt diese Berechtigung, um den Bildschirm zu sperren.</string>
     <string name="notification_title">Zugriff auf Benachrichtigungen</string>
     <string name="notification_summary">OpenLauncher benötigt diese Berechtigung, um die Anzahl der Benachrichtigungen anzuzeigen.</string>
+
+    <!-- Tap to Sleep -->
+    <string name="taptosleep_title">Accessibility Access</string>
+    <string name="taptosleep_summary">OpenLauncher requires the accessibility permission to enable tap to sleep.</string>
+
     <string name="enable">Aktivieren</string>
     <string name="toast_notification_permission_required">Bitte Zugriff auf Benachrichtigungen aktivieren.</string>
     <string name="toast_settings_restored">Einstellungen wiederhergestellt.</string>

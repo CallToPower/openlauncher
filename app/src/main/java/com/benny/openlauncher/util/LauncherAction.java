@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -18,6 +19,7 @@ import com.benny.openlauncher.activity.HomeActivity;
 import com.benny.openlauncher.activity.MinibarEditActivity;
 import com.benny.openlauncher.activity.SettingsActivity;
 import com.benny.openlauncher.viewutil.DialogHelper;
+import com.benny.openlauncher.widget.Desktop;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -52,11 +54,20 @@ public class LauncherAction {
     );
 
     public static void RunAction(Action action, final Context context) {
-        LauncherAction.RunAction(getActionItem(action), context);
+        LauncherAction.RunAction(getActionItem(action), context, null);
+    }
+
+    public static void RunAction(Action action, final Context context, HomeActivity homeActivity) {
+        LauncherAction.RunAction(getActionItem(action), context, homeActivity);
     }
 
     @SuppressWarnings("WrongConstant")
     public static void RunAction(ActionDisplayItem action, final Context context) {
+        LauncherAction.RunAction(action, context, null);
+    }
+
+    @SuppressWarnings("WrongConstant")
+    public static void RunAction(ActionDisplayItem action, final Context context, HomeActivity homeActivity) {
         switch (action._action) {
             case EditMinibar:
                 context.startActivity(new Intent(context, MinibarEditActivity.class));
@@ -65,6 +76,12 @@ public class LauncherAction {
                 context.startActivity(Intent.createChooser(new Intent(Intent.ACTION_SET_WALLPAPER), context.getString(R.string.select_wallpaper)));
                 break;
             case LockScreen:
+                if (homeActivity != null) {
+                    homeActivity.lockScreen();
+                } else {
+                    Log.d(LauncherAction.class.getName(), ">>>>>>>>>>>>>>>>> IS NULL!!!!!!!!!");
+                }
+                /**
                 try {
                     ((DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE)).lockNow();
                 } catch (Exception e) {
@@ -78,6 +95,7 @@ public class LauncherAction {
                         }
                     });
                 }
+                **/
                 break;
             case DeviceSettings:
                 context.startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));

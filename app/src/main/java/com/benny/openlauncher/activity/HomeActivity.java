@@ -93,6 +93,7 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
 
     // static launcher variables
     public static HomeActivity _launcher;
+    public static View _tapToSleepView;
     public static DatabaseHelper _db;
     public static HpDesktopOption _desktopOption;
 
@@ -227,6 +228,7 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
         initSettings();
         initViews();
 
+        _tapToSleepView = getDesktopIndicator();
         createDoubleTapToSleepListener();
     }
 
@@ -237,7 +239,7 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
     private void createDoubleTapToSleepListener() {
         Log.d(getClass().getName(), "createDoubleTapToSleepListener");
 
-        getDesktopIndicator().setOnTouchListener(new View.OnTouchListener() {
+        _tapToSleepView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 gestureDetector.onTouchEvent(event);
@@ -249,28 +251,36 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
                 public boolean onDown(MotionEvent e) { // Alternatively: onDoubleTap
                     Log.d(getClass().getName(), "onDoubleTap");
 
-                    AccessibilityManager manager = (AccessibilityManager) getDesktopIndicator().getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
-                    if (manager.isEnabled() && AccessibilityUtils.getInstance().isAccessibilitySettingsOn(getPackageName(), getDesktopIndicator().getContext())) {
-                        Log.d(getClass().getName(), "Accessibility Manager enabled");
-                        AccessibilityEvent event = AccessibilityEvent.obtain();
-                        event.setEventType(AccessibilityEvent.TYPE_ANNOUNCEMENT);
-                        event.setClassName(getClass().getName());
-                        event.getText().add(LockAccessibilityService.CUSTOM_DOUBLE_TAP_EVENT);
-
-                        event.setSource(getDesktopIndicator());
-                        manager.sendAccessibilityEvent(event);
-                    } else {
-                        Log.d(getClass().getName(), "Accessibility Manager not enabled");
-                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        Toast.makeText(getApplicationContext(), "Please enable this app in the accessibility settings to enable double tap to sleep", Toast.LENGTH_LONG).show();
-                    }
+                    lockScreen();
 
                     return super.onDoubleTap(e);
                 }
             });
         });
+    }
+
+    public void lockScreen() {
+        AccessibilityManager manager = (AccessibilityManager) _tapToSleepView.getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
+        if (manager.isEnabled() && AccessibilityUtils.getInstance().isAccessibilitySettingsOn(getPackageName(), _tapToSleepView.getContext())) {
+            Log.d(getClass().getName(), "Accessibility Manager enabled");
+            AccessibilityEvent event = AccessibilityEvent.obtain();
+            event.setEventType(AccessibilityEvent.TYPE_ANNOUNCEMENT);
+            event.setClassName(getClass().getName());
+            event.getText().add(LockAccessibilityService.CUSTOM_DOUBLE_TAP_EVENT);
+
+            event.setSource(_tapToSleepView);
+            manager.sendAccessibilityEvent(event);
+        } else {
+            Log.d(getClass().getName(), "Accessibility Manager not enabled");
+            DialogHelper.alertDialog(this, getString(R.string.taptosleep_title), getString(R.string.taptosleep_summary), getString(R.string.enable), new MaterialDialog.SingleButtonCallback() {
+                @Override
+                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                    Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                }
+            });
+        }
     }
 
     protected void initAppManager() {
@@ -339,12 +349,13 @@ public final class HomeActivity extends Activity implements OnDesktopEditListene
 
     public final void initMinibar() {
         final ArrayList<LauncherAction.ActionDisplayItem> items = AppSettings.get().getMinibarArrangement();
+        final HomeActivity ha = this;
         MinibarView minibar = findViewById(R.id.minibar);
         minibar.setAdapter(new MinibarAdapter(this, items));
         minibar.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int i, long id) {
-                LauncherAction.RunAction(items.get(i), HomeActivity.this);
+                LauncherAction.RunAction(items.get(i), HomeActivity.this, ha);
             }
         });
     }
