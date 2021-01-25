@@ -6,6 +6,8 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
+import java.util.Objects;
+
 public class LockAccessibilityService extends AccessibilityService {
 
     public static final String CUSTOM_DOUBLE_TAP_EVENT = "DOUBLE_TAPPED";
@@ -27,11 +29,14 @@ public class LockAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         Log.d(TAG, "onAccessibilityEvent");
+        if (event == null) {
+            return;
+        }
+
         boolean containsCustomDoubleTapEvent =
                 event.getText().stream()
-                        .filter(cs -> cs.equals(CUSTOM_DOUBLE_TAP_EVENT))
-                        .findAny()
-                        .isPresent();
+                        .filter(Objects::nonNull)
+                        .anyMatch(cs -> cs.equals(CUSTOM_DOUBLE_TAP_EVENT));
         if (containsCustomDoubleTapEvent) {
             lockScreen();
         }
